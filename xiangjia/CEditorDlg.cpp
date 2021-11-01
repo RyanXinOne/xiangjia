@@ -128,6 +128,7 @@ void CEditorDlg::OnBnClickedOk()
 				chess = bjiang;
 				break;
 			default:
+				chess = none;
 				break;
 			}
 		}
@@ -157,6 +158,7 @@ void CEditorDlg::OnBnClickedOk()
 				chess = rjiang;
 				break;
 			default:
+				chess = none;
 				break;
 			}
 		}

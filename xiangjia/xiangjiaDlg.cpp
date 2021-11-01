@@ -611,7 +611,7 @@ void CxiangjiaDlg::OnRmenuReverseBoard()
 {
 	// TODO: Add your command handler code here
 	//翻转棋盘显示
-	isReverseDisplay = !isReverseDisplay;
+	isReverseDisplay = ~isReverseDisplay;
 	refreshWindow();
 }
 
@@ -734,7 +734,6 @@ UINT ThreadFunc(LPVOID lpParam)
 mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][10], const int searchDepth, mark shield)
 //使用多线程且带有屏蔽走法的外层统一入口，输入参数：控制颜色，棋盘，搜索深度，屏蔽走法
 {
-	int oppo_col = (ctrl_col == red) ? black : red;
 	int i, j, n;
 	int moverableList[20][2];
 	int num = 0;
@@ -787,7 +786,7 @@ mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][
 					//注意内层不需要shield
 
 					tfParamNext = new taskFuncPara;
-					tfParamNext->ctrl_col = oppo_col;
+					tfParamNext->ctrl_col = ctrl_col;
 					copyBoard(fancyBoard, tfParamNext->board);
 					tfParamNext->searchDepth = searchDepth;
 					tfParamNext->currentDepth = 2;

@@ -1,4 +1,5 @@
 #include "aiEngine.h"
+#include <string.h>
 
 int getChessValue(const int chess, const int x, const int y)
 //获取子力价值，输入：棋子类型，x坐标，y坐标
@@ -210,33 +211,25 @@ int evaluate(const int ctrl_col, const int board[9][10])
 	return sum;
 }
 
-void copyBoard(const int from[9][10], int to[9][10])
+void copyBoard(const int src[9][10], int dest[9][10])
 //复制棋盘
 {
-	int i, j;
-	for (i = 0; i < 9; i++)
-	{
-		for (j = 0; j < 10; j++)
-		{
-			to[i][j] = from[i][j];
-		}
-	}
+	memcpy(dest, src, sizeof(int) * 90);
 }
 
 int AlphaBeta(const int ctrl_col, const int board[9][10], const int searchDepth, const int currentDepth, int alpha, int beta, int* count)
-//a-b算法(剪枝)，输入参数：控制颜色，棋盘，搜索深度，当前深度(外部请设1)，alpha值(外部请设最小值)，beta值(外部请设最大值)，节点计数
+//a-b算法(剪枝)，输入参数：控制颜色，棋盘，搜索深度，当前深度(外部请设1,实际因已有一层包装传入2)，alpha值(外部请设最小值)，beta值(外部请设最大值)，节点计数
 {
-	int oppo_col = (ctrl_col == red) ? black : red;
 	int i, j, n;
 	int moverableList[20][2];
 	int num = 0;
 	int fancyBoard[9][10];
 	int result;
+	int mover_col = currentDepth % 2 ? ctrl_col : ((ctrl_col == red) ? black : red);
 
-	if (currentDepth == searchDepth + 1)  //到达叶子节点评估局面(其实评估的是上一层的局面)
+	if (currentDepth == searchDepth + 1)  //到达叶子节点评估我方局面(其实评估的是上一层的局面)
 	{
-		//最底层是敌方，力求最小化；最底层是我方，我方力求最大化
-		return currentDepth % 2 ? -evaluate(oppo_col, board) : evaluate(oppo_col, board);;
+		return evaluate(ctrl_col, board);
 	}
 
 	(*count)++;  //计数
@@ -245,7 +238,7 @@ int AlphaBeta(const int ctrl_col, const int board[9][10], const int searchDepth,
 	{
 		for (j = 0; j < 10; j++)
 		{
-			if (!isSameColor(ctrl_col, board[i][j]))  //只能操控本方棋子
+			if (!isSameColor(mover_col, board[i][j]))  //只能操控本方棋子
 				continue;
 			moverablePosition(board[i][j], i, j, board, moverableList, &num);  //更新棋子可走位置列表
 			for (n = 0; n < num; n++)  //遍历可走位置
@@ -261,7 +254,7 @@ int AlphaBeta(const int ctrl_col, const int board[9][10], const int searchDepth,
 					//接下来全部使用fancyBoard
 					move(fancyBoard[i][j], i, j, moverableList[n][0], moverableList[n][1], fancyBoard);
 
-					result = AlphaBeta(oppo_col, fancyBoard, searchDepth, currentDepth + 1, alpha, beta, count);
+					result = AlphaBeta(ctrl_col, fancyBoard, searchDepth, currentDepth + 1, alpha, beta, count);
 				}
 
 				if (currentDepth % 2)  //我方，力求得分最大化
