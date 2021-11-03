@@ -29,9 +29,7 @@ CPoint onRButtonPoint;
 ULONGLONG t1 = 0, t2 = 0;  //用于计时
 
 int count = 0;  //搜索节点计数
-mark Alpha[60];  //多线程共享alpha输出，保留所有得分最高的结果
-int AlphaListNum = 0;
-
+mark Alpha;  //多线程共享alpha输出
 
 struct {
 	int chess;
@@ -672,20 +670,6 @@ void CxiangjiaDlg::OnRmenuBoardEditor()
 	}
 }
 
-void updateAlphaList(mark result)
-//更新Alpha数组，保留所有得分最高的结果，用于随机化这些走法
-{
-	if (result.score > Alpha[0].score)
-	{
-		Alpha[0] = result;
-		AlphaListNum = 1;
-	}
-	else if (result.score == Alpha[0].score)
-	{
-		Alpha[AlphaListNum++] = result;
-	}
-}
-
 void taskFunc(taskFuncPara* tfParamNext, CCriticalSection* ccs)
 //节点任务处理函数，并行使用ab算法
 {
@@ -693,7 +677,7 @@ void taskFunc(taskFuncPara* tfParamNext, CCriticalSection* ccs)
 
 	int c = 0;  //线程内节点计数
 
-	result.score = AlphaBeta(tfParamNext->ctrl_col, tfParamNext->board, tfParamNext->searchDepth, tfParamNext->currentDepth, Alpha[0].score, INT_MAX, &c);
+	result.score = AlphaBeta(tfParamNext->ctrl_col, tfParamNext->board, tfParamNext->searchDepth, tfParamNext->currentDepth, Alpha.score, INT_MAX, &c);
 
 	result.cx = tfParamNext->i;
 	result.cy = tfParamNext->j;
@@ -701,7 +685,11 @@ void taskFunc(taskFuncPara* tfParamNext, CCriticalSection* ccs)
 	result.ty = tfParamNext->n1;
 
 	ccs->Lock();
-	updateAlphaList(result);
+	//更新Alpha
+	if (result.score > Alpha.score)
+	{
+		Alpha = result;
+	}
 	count += c;
 	ccs->Unlock();
 
@@ -745,9 +733,8 @@ mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][
 	threadFuncPara threadParam;  //线程函数参数
 	HANDLE* threadList = new HANDLE[threadLimit];  //线程列表，线程池
 	CWinThread* pThread;
-	Alpha[0].score = INT_MIN;  //初始化全局Alpha，设为最小值
+	Alpha.score = INT_MIN;  //初始化全局Alpha，设为最小值
 	count += 1;  //初始化计数
-	AlphaListNum = 0;  //初始化AlphaList计数
 	CCriticalSection critical_section1;  //临界区线程锁1,用于管理任务接收
 	CCriticalSection critical_section2;  //临界区线程锁2,用于更新Alpha
 
@@ -775,8 +762,11 @@ mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][
 					result.cy = j;
 					result.tx = moverableList[n][0];
 					result.ty = moverableList[n][1];
-					
-					updateAlphaList(result);
+					//更新Alpha
+					if (result.score > Alpha.score)
+					{
+						Alpha = result;
+					}
 				}
 				else
 				{
@@ -817,7 +807,7 @@ mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][
 	//等待所有工作线程执行完成
 	WaitForMultipleObjects(threadLimit, threadList, TRUE, 60 * 1000);  //等待最长一分钟，防止有线程异常导致程序无响应，无限为WSA_INFINITE
 	
-	result = Alpha[rand() % AlphaListNum];
+	result = Alpha;
 
 	//清除残留的线程，危险方法，不推荐
 	for (i = 0; i < threadLimit; i++)
@@ -830,5 +820,5 @@ mark CxiangjiaDlg::threadShieldAlphaBeta(const int ctrl_col, const int board[9][
 
 	delete []threadList;
 
-	return result;  //走子随机化rand() % AlphaListNum
+	return result;
 }

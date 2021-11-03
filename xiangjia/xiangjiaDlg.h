@@ -75,6 +75,5 @@ public:
 
 };
 
-void updateAlphaList(mark result);
-void taskFunc(LPVOID lpParam, CCriticalSection* ccs);
+void taskFunc(taskFuncPara* tfParamNext, CCriticalSection* ccs);
 UINT ThreadFunc(LPVOID lpParam);

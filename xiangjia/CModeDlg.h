@@ -1,4 +1,5 @@
 #pragma once
+
 extern int player;
 extern int ai;
 extern int ai_first;

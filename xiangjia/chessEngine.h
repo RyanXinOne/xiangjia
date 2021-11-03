@@ -1,3 +1,5 @@
+#pragma once
+
 #define none 0
 #define bjiang 1
 #define bche 2
